@@ -37,42 +37,26 @@ function sendCanvas(index) {
 let index = 0;
 let offset = 0;
 
-function processMove(delta) {
+function checkFullAndSend() {
   if (offset * 4 === data.length) {
     sendCanvas(index++);
     offset = 0;
   }
+}
 
-  const r = offset * 4 + 0;
-  const g = offset * 4 + 1;
-  const b = offset * 4 + 2;
-  const a = offset * 4 + 3;
+function writePixel(delta) {
+  checkFullAndSend();
 
-  let {
+  const {
     clientX,
     clientY,
     time,
   } = delta;
 
-  if (time >= 255) {
-    data[r] = 128;
-    data[g] = 128;
-    data[b] = 255;
-    data[a] = 255;
-
-    offset += 1;
-
-    return processMove({
-      clientX,
-      clientY,
-      time: time - 255,
-    });
-  }
-
-  clientX = Math.min(clientX, 127);
-  clientX = Math.max(clientX, -128);
-  clientY = Math.min(clientY, 127);
-  clientY = Math.max(clientY, -128);
+  const r = offset * 4 + 0;
+  const g = offset * 4 + 1;
+  const b = offset * 4 + 2;
+  const a = offset * 4 + 3;
 
   data[r] = clientX + 128;
   data[g] = clientY + 128;
@@ -82,6 +66,54 @@ function processMove(delta) {
   offset += 1;
 
   ctx.putImageData(imageData, 0, 0);
+}
+
+function checkTimeOverflow(delta) {
+  if (delta.time >= 255) {
+    delta.time -= 255;
+    writePixel({
+      clientX: 0,
+      clientY: 0,
+      time: 255,
+    });
+
+    checkTimeOverflow(delta);
+  }
+}
+
+function checkTimeout() {
+  const time = Date.now();
+
+  if (time - prevState.time < 255) {
+    return;
+  }
+
+  if (time - prevState.time >= 255) {
+    prevState.time += 255;
+    writePixel({
+      clientX: 0,
+      clientY: 0,
+      time: 255,
+    });
+    checkTimeout();
+  }
+}
+
+setInterval(checkTimeout, 256);
+
+function processMove(delta) {
+  checkTimeOverflow(delta);
+
+  let {
+    clientX,
+    clientY,
+    time,
+  } = delta;
+
+  clientX = Math.min(clientX, 127);
+  clientX = Math.max(clientX, -128);
+  clientY = Math.min(clientY, 127);
+  clientY = Math.max(clientY, -128);
 
   if (clientX !== delta.clientX || clientY !== delta.clientY) {
     return processMove({
@@ -90,6 +122,8 @@ function processMove(delta) {
       time: 0,
     });
   }
+
+  writePixel(delta);
 }
 
 document.addEventListener('mousemove', (ev) => {
@@ -113,20 +147,4 @@ document.addEventListener('mousemove', (ev) => {
   prevState = currState;
 
   processMove(deltaState);
-});
-
-document.addEventListener('click', (ev) => {
-  canvas.toBlob((blob) => {
-  //   const req = new Request(`/tile/1`, {
-  //     body: blob,
-  //     cache: 'no-store',
-  //     headers: {
-  //       'Content-Type': 'image/png',
-  //     },
-  //     method: 'PUT',
-  //     mode: 'cors',
-  //   });
-  //   fetch(req);
-    console.log(data.length, blob.size);
-  }, 'image/png');
 });
