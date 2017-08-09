@@ -1,0 +1,19 @@
+{
+  "name": "hot-tiles",
+  "version": "0.0.0",
+  "description": "Experiment with compressing user events",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apatryda/hot-tiles.git"
+  },
+  "author": "Artur Nerkowski",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/apatryda/hot-tiles/issues"
+  },
+  "homepage": "https://github.com/apatryda/hot-tiles#readme"
+}
